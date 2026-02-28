@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "tree.h"
+#include "../tree.h"
 
 int getTreeDepth(Node* root) {
     if (root == NULL) return 0;
@@ -38,7 +38,7 @@ void insertNodeTest() {
     printf("test 2, insert node test\n");
     Node* root = NULL;
 
-    printf("test 1, inserting nodes...\n");
+    printf("test 2, inserting nodes...\n");
     insert(&root, 2);
     assert(getTreeDepth(root) == 1);
 
@@ -64,7 +64,6 @@ void insertNodeTest() {
 void deleteChildTest() {
     printf("test 3, delete child test\n");
     Node* root = NULL;
-
 
     printf("test 3, inserting data...\n");
     insert(&root, 50);
@@ -125,7 +124,6 @@ int main(void) {
     insertNodeTest();
     deleteChildTest();
     isSymmetricStructTest();
-
 
     printf("ТЕСТЫ ОКОНЧЕНЫ");
 }

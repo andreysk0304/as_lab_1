@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "tree.h"
+#include "../tree.h"
 
 void showMenu() {
     printf("1. Добавить ноду\n");

@@ -36,7 +36,6 @@ Node* findMin(Node* root) {
     return current;
 }
 
-
 void deleteNode(Node** root, int data) {
     if (*root == NULL) {
         printf("Element not found!\n");
