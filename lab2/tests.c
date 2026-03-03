@@ -19,15 +19,18 @@ Table make_sample_table(void) {
 }
 
 void test_init_table(void) {
+    printf("test 1, init table starting...\n");
     Table table;
     initTable(&table);
 
     assert(table.size == 0);
     assert(table.values == NULL);
     assert(table.keys == NULL);
+    printf("test 1, init table complete!\n");
 }
 
 void test_addRow(void) {
+    printf("test 2, add row starting...\n");
     Table t;
     initTable(&t);
 
@@ -39,9 +42,11 @@ void test_addRow(void) {
     assert(strcmp(t.values[0], "hello") == 0);
 
     freeTable(&t);
+    printf("test 2, add row complete!\n");
 }
 
 void test_swapRows(void) {
+    printf("test 3, swap rows starting...\n");
     Table t;
     initTable(&t);
 
@@ -56,9 +61,11 @@ void test_swapRows(void) {
     assert(strcmp(t.values[1], "aaa") == 0);
 
     freeTable(&t);
+    printf("test 3, swap rows complete\n");
 }
 
 void test_copyTable(void) {
+    printf("test 4, copy table starting...\n");
     Table a = make_sample_table();
     Table b = copyTable(&a);
 
@@ -75,9 +82,11 @@ void test_copyTable(void) {
 
     freeTable(&a);
     freeTable(&b);
+    printf("test 4, copy table complete\n");
 }
 
 void test_insertionSort(void) {
+    printf("test 5, insertion sort starting...\n");
     Table t = make_sample_table();
 
     insertionSort(&t);
@@ -95,9 +104,11 @@ void test_insertionSort(void) {
     assert(strcmp(t.values[4], "на абордаж") == 0);
 
     freeTable(&t);
+    printf("test 5, insertion sort complete!\n");
 }
 
 void test_binarySearch_found_and_not_found(void) {
+    printf("test 6, binary search found and not found starting...\n");
     Table t = make_sample_table();
     insertionSort(&t);
 
@@ -115,9 +126,11 @@ void test_binarySearch_found_and_not_found(void) {
     assert(imiss == -1);
 
     freeTable(&t);
+    printf("test 6, binary search found and not found complete!\n");
 }
 
 void test_reverseTable(void) {
+    printf("test 7, reverse table starting\n");
     Table t;
     initTable(&t);
 
@@ -136,9 +149,11 @@ void test_reverseTable(void) {
     assert(strcmp(t.values[2], "a") == 0);
 
     freeTable(&t);
+    printf("test 7, reverse table complete\n");
 }
 
 void test_shuffleTable_basic(void) {
+    printf("test 8, shuffle table basic starting...\n");
     srand(123);
 
     Table t = make_sample_table();
@@ -166,15 +181,18 @@ void test_shuffleTable_basic(void) {
     assert(count_1 == 1 && count_2 == 1 && count_3 == 1 && count_5 == 1 && count_10 == 1);
 
     freeTable(&t);
+    printf("test 8, shuffle table basic complete\n");
 }
 
 void test_freeTable_resets(void) {
+    printf("test 9, free table resets startig...\n");
     Table t = make_sample_table();
     freeTable(&t);
 
     assert(t.size == 0);
     assert(t.keys == NULL);
     assert(t.values == NULL);
+    printf("test 9, free table resets complete!\n");
 }
 
 int main(void) {

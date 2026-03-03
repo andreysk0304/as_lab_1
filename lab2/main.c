@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "table.h"
 
 int main(void) {
@@ -11,6 +7,10 @@ int main(void) {
     readTableFromFile(&table, "input.txt");
 
     printTable(&table);
+
+    insertionSort(&table);
+
+    writeTableToFile(&table, "output.txt");
 
     freeTable(&table);
 

@@ -165,3 +165,24 @@ int binarySearch(Table* table, const char* key) {
     }
     return -1;
 }
+
+
+void writeTableToFile(Table* table, const char* filename) {
+    if (!table) {
+        printf("Таблица пуста!\n");
+        return;
+    }
+
+    FILE* out = fopen(filename, "w");
+    if (!out) {
+        fprintf(out, "Не удалось открыть output файл");
+        return;
+    }
+
+    fprintf(out, "Таблица\n");
+    for (int i = 0; i < table->size; i++) {
+        fprintf(out, "%s  %s\n", table->keys[i], table->values[i]);
+    }
+
+    fclose(out);
+}

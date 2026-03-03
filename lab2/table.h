@@ -15,6 +15,8 @@ void freeTable(Table* table);
 void printTable(Table* table);
 void readTableFromFile(Table* table, const char* filename);
 
+void writeTableToFile(Table* table, const char* filename);
+
 void swapRows(Table* table, int i, int j);
 Table copyTable(Table* src);
 
