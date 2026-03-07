@@ -85,6 +85,12 @@ void test_copyTable(void) {
     printf("test 4, copy table complete\n");
 }
 
+static int is_sorted_by_key(Table* t) {
+    for (int i = 1; i < t->size; i++)
+        if (strcmp(t->keys[i - 1], t->keys[i]) > 0) return 0;
+    return 1;
+}
+
 void test_insertionSort(void) {
     printf("test 5, insertion sort starting...\n");
     Table t = make_sample_table();
@@ -105,6 +111,41 @@ void test_insertionSort(void) {
 
     freeTable(&t);
     printf("test 5, insertion sort complete!\n");
+}
+
+/* Три случая проверки сортировки по заданию */
+void test_sort_case1_already_sorted(void) {
+    printf("test 5a, sort case 1 (уже упорядочены)...\n");
+    Table t = make_sample_table();
+    insertionSort(&t);
+    assert(is_sorted_by_key(&t));
+    insertionSort(&t);
+    assert(is_sorted_by_key(&t));
+    freeTable(&t);
+    printf("test 5a, case 1 complete\n");
+}
+
+void test_sort_case2_reverse_order(void) {
+    printf("test 5b, sort case 2 (обратный порядок)...\n");
+    Table t = make_sample_table();
+    insertionSort(&t);
+    reverseTable(&t);
+    assert(!is_sorted_by_key(&t));
+    insertionSort(&t);
+    assert(is_sorted_by_key(&t));
+    freeTable(&t);
+    printf("test 5b, case 2 complete\n");
+}
+
+void test_sort_case3_unordered(void) {
+    printf("test 5c, sort case 3 (не упорядочены)...\n");
+    srand(42);
+    Table t = make_sample_table();
+    shuffleTable(&t);
+    insertionSort(&t);
+    assert(is_sorted_by_key(&t));
+    freeTable(&t);
+    printf("test 5c, case 3 complete\n");
 }
 
 void test_binarySearch_found_and_not_found(void) {
@@ -185,7 +226,7 @@ void test_shuffleTable_basic(void) {
 }
 
 void test_freeTable_resets(void) {
-    printf("test 9, free table resets startig...\n");
+    printf("test 9, free table resets starting...\n");
     Table t = make_sample_table();
     freeTable(&t);
 
@@ -203,6 +244,9 @@ int main(void) {
     test_swapRows();
     test_copyTable();
     test_insertionSort();
+    test_sort_case1_already_sorted();
+    test_sort_case2_reverse_order();
+    test_sort_case3_unordered();
     test_binarySearch_found_and_not_found();
     test_reverseTable();
     test_shuffleTable_basic();

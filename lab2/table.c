@@ -56,7 +56,7 @@ void printTable(Table* table) {
 
     int i = 0;
     for (i = 0; i<table -> size; i++) {
-        printf("%d  %s  %s\n", i + 1, table->keys[i], table->values[i]);
+        printf("%s  %s\n", table->keys[i], table->values[i]);
     }
 }
 
@@ -167,6 +167,34 @@ int binarySearch(Table* table, const char* key) {
 }
 
 
+void removeRowByKey(Table* table, const char* key) {
+    int i;
+    for (i = 0; i < table->size; i++) {
+        if (strcmp(table->keys[i], key) == 0) break;
+    }
+    if (i == table->size) {
+        printf("Запись с ключом \"%s\" не найдена.\n", key);
+        return;
+    }
+    free(table->keys[i]);
+    free(table->values[i]);
+    for (int j = i; j < table->size - 1; j++) {
+        table->keys[j] = table->keys[j + 1];
+        table->values[j] = table->values[j + 1];
+    }
+    table->size--;
+    if (table->size == 0) {
+        free(table->keys);
+        free(table->values);
+        table->keys = NULL;
+        table->values = NULL;
+    } else {
+        table->keys = realloc(table->keys, table->size * sizeof(char*));
+        table->values = realloc(table->values, table->size * sizeof(char*));
+    }
+}
+
+
 void writeTableToFile(Table* table, const char* filename) {
     if (!table) {
         printf("Таблица пуста!\n");
@@ -175,7 +203,7 @@ void writeTableToFile(Table* table, const char* filename) {
 
     FILE* out = fopen(filename, "w");
     if (!out) {
-        fprintf(out, "Не удалось открыть output файл");
+        printf("Не удалось открыть файл для записи.\n");
         return;
     }
 
