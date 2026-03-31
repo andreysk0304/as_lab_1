@@ -89,7 +89,7 @@ void runSortTestCases(Table* table) {
 
     Table t;
 
-    printf("\n=== Случай 1: элементы упорядочены ===\n");
+    printf("\n=== Случай 1,а элементы упорядочены ===\n");
     t = copyTable(table);
     insertionSort(&t);
     printf("Исходная таблица:\n");
@@ -100,7 +100,7 @@ void runSortTestCases(Table* table) {
     printTable(&t);
     freeTable(&t);
 
-    printf("\n=== Случай 2: обратный порядок ===\n");
+    printf("\n=== Случай 2, обратный порядок ===\n");
     t = copyTable(table);
     insertionSort(&t);
     reverseTable(&t);
@@ -112,7 +112,7 @@ void runSortTestCases(Table* table) {
     printTable(&t);
     freeTable(&t);
 
-    printf("\n=== Случай 3: не упорядочены ===\n");
+    printf("\n=== Случай 3, не упорядочены ===\n");
     t = copyTable(table);
     srand(time(NULL));
     shuffleTable(&t);
@@ -187,7 +187,7 @@ void searchMenu(Table* table) {
     if (idx >= 0)
         printf("Найдено: ключ \"%s\" -> значение \"%s\"\n", table->keys[idx], table->values[idx]);
     else
-        printf("Запись с ключом \"%s\" не найдена.\n", key);
+        printf("Запись с ключом \"%s\" не найдена\n", key);
     free(key);
 }
 
