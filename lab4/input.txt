@@ -1,0 +1,30 @@
+1 mango 10
+1 apple 1
+1 peach 8
+1 berry 2
+1 grape 5
+1 lemon 6
+1 orange 7
+1 banana 3
+1 melon 9
+1 papaya 11
+1 guava 12
+1 tomato 13
+1 kiwi 14
+1 plum 15
+1 pear 16
+1 fig 17
+1 lime 18
+1 olive 19
+1 dates 20
+1 raisin 21
+1 cherry 22
+1 cocoa 23
+3
+4 apple
+4 tomato
+2 orange
+2 kiwi
+2 papaya
+3
+4 orange

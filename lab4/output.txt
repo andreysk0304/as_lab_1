@@ -1,0 +1,113 @@
+1 mango 10
+Ключ "mango" добавлен, значение = 10
+
+1 apple 1
+Ключ "apple" добавлен, значение = 1
+
+1 peach 8
+Ключ "peach" добавлен, значение = 8
+
+1 berry 2
+Ключ "berry" добавлен, значение = 2
+
+1 grape 5
+Ключ "grape" добавлен, значение = 5
+
+1 lemon 6
+Ключ "lemon" добавлен, значение = 6
+
+1 orange 7
+Ключ "orange" добавлен, значение = 7
+
+1 banana 3
+Ключ "banana" добавлен, значение = 3
+
+1 melon 9
+Ключ "melon" добавлен, значение = 9
+
+1 papaya 11
+Ключ "papaya" добавлен, значение = 11
+
+1 guava 12
+Ключ "guava" добавлен, значение = 12
+
+1 tomato 13
+Ключ "tomato" добавлен, значение = 13
+
+1 kiwi 14
+Ключ "kiwi" добавлен, значение = 14
+
+1 plum 15
+Ключ "plum" добавлен, значение = 15
+
+1 pear 16
+Ключ "pear" добавлен, значение = 16
+
+1 fig 17
+Ключ "fig" добавлен, значение = 17
+
+1 lime 18
+Ключ "lime" добавлен, значение = 18
+
+1 olive 19
+Ключ "olive" добавлен, значение = 19
+
+1 dates 20
+Ключ "dates" добавлен, значение = 20
+
+1 raisin 21
+Ключ "raisin" добавлен, значение = 21
+
+1 cherry 22
+Ключ "cherry" добавлен, значение = 22
+
+1 cocoa 23
+Ключ "cocoa" добавлен, значение = 23
+
+3
+Текущее дерево:
+[fig=17 | mango=10]
+  [berry=2]
+    [apple=1 | banana=3]
+    [cherry=22 | cocoa=23 | dates=20]
+  [guava=12]
+    [grape=5]
+    [kiwi=14 | lemon=6 | lime=18]
+  [orange=7 | peach=8 | plum=15]
+    [melon=9 | olive=19]
+    [papaya=11]
+    [pear=16]
+    [raisin=21 | tomato=13]
+
+4 apple
+Найдено: "apple" -> 1
+
+4 tomato
+Найдено: "tomato" -> 13
+
+2 orange
+Ключ "orange" удалён
+
+2 kiwi
+Ключ "kiwi" удалён
+
+2 papaya
+Ключ "papaya" удалён
+
+3
+Текущее дерево:
+[fig=17 | olive=19]
+  [berry=2]
+    [apple=1 | banana=3]
+    [cherry=22 | cocoa=23 | dates=20]
+  [guava=12 | mango=10]
+    [grape=5]
+    [lemon=6 | lime=18]
+    [melon=9]
+  [plum=15]
+    [peach=8 | pear=16]
+    [raisin=21 | tomato=13]
+
+4 orange
+Ошибка: ключ не найден.
+
