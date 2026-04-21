@@ -66,18 +66,18 @@
 
 3
 Текущее дерево:
-[fig=17 | mango=10]
-  [berry=2]
-    [apple=1 | banana=3]
-    [cherry=22 | cocoa=23 | dates=20]
-  [guava=12]
-    [grape=5]
-    [kiwi=14 | lemon=6 | lime=18]
-  [orange=7 | peach=8 | plum=15]
-    [melon=9 | olive=19]
-    [papaya=11]
-    [pear=16]
-    [raisin=21 | tomato=13]
+< fig -> 17 , mango -> 10 >
+  < berry -> 2 >
+    < apple -> 1 , banana -> 3 >
+    < cherry -> 22 , cocoa -> 23 , dates -> 20 >
+  < guava -> 12 >
+    < grape -> 5 >
+    < kiwi -> 14 , lemon -> 6 , lime -> 18 >
+  < orange -> 7 , peach -> 8 , plum -> 15 >
+    < melon -> 9 , olive -> 19 >
+    < papaya -> 11 >
+    < pear -> 16 >
+    < raisin -> 21 , tomato -> 13 >
 
 4 apple
 Найдено: "apple" -> 1
@@ -96,18 +96,18 @@
 
 3
 Текущее дерево:
-[fig=17 | olive=19]
-  [berry=2]
-    [apple=1 | banana=3]
-    [cherry=22 | cocoa=23 | dates=20]
-  [guava=12 | mango=10]
-    [grape=5]
-    [lemon=6 | lime=18]
-    [melon=9]
-  [plum=15]
-    [peach=8 | pear=16]
-    [raisin=21 | tomato=13]
+< fig -> 17 , olive -> 19 >
+  < berry -> 2 >
+    < apple -> 1 , banana -> 3 >
+    < cherry -> 22 , cocoa -> 23 , dates -> 20 >
+  < guava -> 12 , mango -> 10 >
+    < grape -> 5 >
+    < lemon -> 6 , lime -> 18 >
+    < melon -> 9 >
+  < plum -> 15 >
+    < peach -> 8 , pear -> 16 >
+    < raisin -> 21 , tomato -> 13 >
 
 4 orange
-Ошибка: ключ не найден.
+Ключ не найден
 

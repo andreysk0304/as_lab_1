@@ -21,8 +21,7 @@ void clearBuffer(void) {
 
 void addNodeMenu(BTree* tree) {
     char key[64];
-    double value = 0.0;
-    BTreeStatus status = BTREE_OK;
+    double number = 0.0;
 
     printf("Ключ: ");
     if (scanf("%63s", key) != 1) {
@@ -32,28 +31,20 @@ void addNodeMenu(BTree* tree) {
     }
 
     printf("Значение: ");
-    if (scanf("%lf", &value) != 1) {
+    if (scanf("%lf", &number) != 1) {
         printf("Ошибка ввода.\n");
         clearBuffer();
         return;
     }
     clearBuffer();
 
-    status = insert_tree(tree, key, value);
-    if (status == BTREE_OK) {
+    if (insert_tree(tree, key, number)) {
         printf("Узел добавлен.\n");
-    } else if (status == BTREE_DUPLICATE_KEY) {
-        printf("Такой ключ уже есть в дереве.\n");
-    } else if (status == BTREE_INVALID_KEY) {
-        printf("Ключ должен содержать только латинские буквы и быть длиной от 1 до 6 символов.\n");
-    } else {
-        printf("Не удалось добавить узел.\n");
     }
 }
 
 void deleteNodeMenu(BTree* tree) {
     char key[64];
-    BTreeStatus status = BTREE_OK;
 
     printf("Ключ для удаления: ");
     if (scanf("%63s", key) != 1) {
@@ -63,22 +54,14 @@ void deleteNodeMenu(BTree* tree) {
     }
     clearBuffer();
 
-    status = delete_tree(tree, key);
-    if (status == BTREE_OK) {
+    if (delete_tree(tree, key)) {
         printf("Узел удалён.\n");
-    } else if (status == BTREE_KEY_NOT_FOUND) {
-        printf("Ключ не найден.\n");
-    } else if (status == BTREE_INVALID_KEY) {
-        printf("Некорректный ключ.\n");
-    } else {
-        printf("Не удалось удалить узел.\n");
     }
 }
 
 void searchNodeMenu(BTree* tree) {
     char key[64];
-    double value = 0.0;
-    BTreeStatus status = BTREE_OK;
+    double number = 0.0;
 
     printf("Ключ для поиска: ");
     if (scanf("%63s", key) != 1) {
@@ -88,30 +71,28 @@ void searchNodeMenu(BTree* tree) {
     }
     clearBuffer();
 
-    status = search_tree(tree->root, key, &value);
-    if (status == BTREE_OK) {
-        printf("Найдено: \"%s\" -> %.10g\n", key, value);
-    } else if (status == BTREE_KEY_NOT_FOUND) {
-        printf("Ключ не найден.\n");
-    } else {
+    if (is_valid_key(key) && search_tree(tree->root, key, &number)) {
+        printf("Найдено: \"%s\" -> %.10g\n", key, number);
+    } else if (!is_valid_key(key)) {
         printf("Некорректный ключ.\n");
+    } else {
+        printf("Ключ не найден.\n");
     }
 }
 
 void processFileMenu(BTree* tree) {
-    char input_filename[256];
-    char output_filename[256];
-    BTreeStatus status = BTREE_OK;
+    char in_name[256];
+    char out_name[256];
 
     printf("Имя входного файла: ");
-    if (scanf("%255s", input_filename) != 1) {
+    if (scanf("%255s", in_name) != 1) {
         printf("Ошибка ввода.\n");
         clearBuffer();
         return;
     }
 
     printf("Имя выходного файла: ");
-    if (scanf("%255s", output_filename) != 1) {
+    if (scanf("%255s", out_name) != 1) {
         printf("Ошибка ввода.\n");
         clearBuffer();
         return;
@@ -119,10 +100,8 @@ void processFileMenu(BTree* tree) {
     clearBuffer();
 
     clear_tree(tree);
-    status = process_commands_from_file(tree, input_filename, output_filename);
-
-    if (status == BTREE_OK) {
-        printf("Команды выполнены. Результат записан в %s\n", output_filename);
+    if (process_commands_from_file(tree, in_name, out_name)) {
+        printf("Команды выполнены. Результат записан в %s\n", out_name);
     } else {
         printf("Не удалось обработать файл.\n");
     }
@@ -130,21 +109,21 @@ void processFileMenu(BTree* tree) {
 
 int main(void) {
     BTree tree;
-    int input = 0;
+    int cmd = 0;
 
     init_tree(&tree);
 
     while (1) {
         showMenu();
 
-        if (scanf("%d", &input) != 1) {
+        if (scanf("%d", &cmd) != 1) {
             printf("Введите число.\n");
             clearBuffer();
             continue;
         }
         clearBuffer();
 
-        switch (input) {
+        switch (cmd) {
             case 0:
                 clear_tree(&tree);
                 printf("Память освобождена. До следующей лабы!\n");

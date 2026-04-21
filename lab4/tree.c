@@ -5,17 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+int insert_tree_raw(BTree* tree, const char* key, double value);
+void delete_tree_raw(BTree* tree, const char* key);
+
 // Копирует ключ в буфер
 void copy_key(char destination[BTREE_KEY_SIZE], const char* source) {
     
     strncpy(destination, source, BTREE_KEY_SIZE - 1);
     destination[BTREE_KEY_SIZE - 1] = '\0';
-}
-
-// Копирует пару ключ и его значение между узлами
-void copy_entry(BTreeNode* node, int destination, BTreeNode* source, int index) {
-    copy_key(node->keys[destination], source->keys[index]);
-    node->values[destination] = source->values[index];
 }
 
 // Сдвигает ключи и значения вправо
@@ -35,42 +32,44 @@ void shift_children_right(BTreeNode* node, int from_index) {
 
 // Ищет позицию ключа внутри узла
 int find_key_index(BTreeNode* node, const char* key) {
-    int index = 0;
+    int pos = 0;
 
-    while (index < node->key_count && strcmp(node->keys[index], key) < 0) {
-        index++;
+    while (pos < node->key_count && strcmp(node->keys[pos], key) < 0) {
+        pos++;
     }
 
-    return index;
+    return pos;
 }
 
 // Делит переполненного потомка на два узла
 int split_child(BTreeNode* parent, int child_index) {
-    BTreeNode* full_child = parent->children[child_index];
-    BTreeNode* new_child = create_node(full_child->leaf);
+    BTreeNode* left_node = parent->children[child_index];
+    BTreeNode* right_node = create_node(left_node->leaf);
 
-    if (!new_child) return 0;
+    if (!right_node) return 0;
 
-    new_child->key_count = BTREE_T - 1;
+    right_node->key_count = BTREE_T - 1;
 
     for (int i = 0; i < BTREE_T - 1; i++) {
-        copy_entry(new_child, i, full_child, i + BTREE_T);
+        copy_key(right_node->keys[i], left_node->keys[i + BTREE_T]);
+        right_node->values[i] = left_node->values[i + BTREE_T];
     }
 
-    if (!full_child->leaf) {
+    if (!left_node->leaf) {
         for (int i = 0; i < BTREE_T; i++) {
-            new_child->children[i] = full_child->children[i + BTREE_T];
-            full_child->children[i + BTREE_T] = NULL;
+            right_node->children[i] = left_node->children[i + BTREE_T];
+            left_node->children[i + BTREE_T] = NULL;
         }
     }
 
-    full_child->key_count = BTREE_T - 1;
+    left_node->key_count = BTREE_T - 1;
 
     shift_children_right(parent, child_index + 1);
-    parent->children[child_index + 1] = new_child;
+    parent->children[child_index + 1] = right_node;
 
     shift_keys_right(parent, child_index);
-    copy_entry(parent, child_index, full_child, BTREE_T - 1);
+    copy_key(parent->keys[child_index], left_node->keys[BTREE_T - 1]);
+    parent->values[child_index] = left_node->values[BTREE_T - 1];
     parent->key_count++;
 
     return 1;
@@ -113,26 +112,26 @@ int insert_non_full(BTreeNode* node, const char* key, double value) {
 
 // Берёт максимальный ключ из левого поддерева
 void get_predecessor(BTreeNode* node, int index, char key[BTREE_KEY_SIZE], double* value) {
-    BTreeNode* current = node->children[index];
+    BTreeNode* cur = node->children[index];
 
-    while (!current->leaf) {
-        current = current->children[current->key_count];
+    while (!cur->leaf) {
+        cur = cur->children[cur->key_count];
     }
 
-    copy_key(key, current->keys[current->key_count - 1]);
-    *value = current->values[current->key_count - 1];
+    copy_key(key, cur->keys[cur->key_count - 1]);
+    *value = cur->values[cur->key_count - 1];
 }
 
 // Берёт минимальный ключ из правого поддерева
 void get_successor(BTreeNode* node, int index, char key[BTREE_KEY_SIZE], double* value) {
-    BTreeNode* current = node->children[index + 1];
+    BTreeNode* cur = node->children[index + 1];
 
-    while (!current->leaf) {
-        current = current->children[0];
+    while (!cur->leaf) {
+        cur = cur->children[0];
     }
 
-    copy_key(key, current->keys[0]);
-    *value = current->values[0];
+    copy_key(key, cur->keys[0]);
+    *value = cur->values[0];
 }
 
 // Удаляет ключ из листа
@@ -147,216 +146,172 @@ void remove_from_leaf(BTreeNode* node, int index) {
 
 // Заимствует ключ у левого брата
 void borrow_from_prev(BTreeNode* node, int index) {
-    BTreeNode* child = node->children[index];
-    BTreeNode* sibling = node->children[index - 1];
+    BTreeNode* a = node->children[index];
+    BTreeNode* b = node->children[index - 1];
+    int i = 0;
 
-    for (int i = child->key_count - 1; i >= 0; i--) {
-        copy_key(child->keys[i + 1], child->keys[i]);
-        child->values[i + 1] = child->values[i];
+    for (i = a->key_count; i > 0; i--) {
+        copy_key(a->keys[i], a->keys[i - 1]);
+        a->values[i] = a->values[i - 1];
     }
 
-    if (!child->leaf) {
-        for (int i = child->key_count; i >= 0; i--) {
-            child->children[i + 1] = child->children[i];
+    if (!a->leaf) {
+        for (i = a->key_count + 1; i > 0; i--) {
+            a->children[i] = a->children[i - 1];
         }
     }
 
-    copy_key(child->keys[0], node->keys[index - 1]);
-    child->values[0] = node->values[index - 1];
+    copy_key(a->keys[0], node->keys[index - 1]);
+    a->values[0] = node->values[index - 1];
 
-    if (!child->leaf) {
-        child->children[0] = sibling->children[sibling->key_count];
-        sibling->children[sibling->key_count] = NULL;
+    if (!a->leaf) {
+        a->children[0] = b->children[b->key_count];
+        b->children[b->key_count] = NULL;
     }
 
-    copy_key(node->keys[index - 1], sibling->keys[sibling->key_count - 1]);
-    node->values[index - 1] = sibling->values[sibling->key_count - 1];
+    copy_key(node->keys[index - 1], b->keys[b->key_count - 1]);
+    node->values[index - 1] = b->values[b->key_count - 1];
 
-    child->key_count++;
-    sibling->key_count--;
+    a->key_count = a->key_count + 1;
+    b->key_count = b->key_count - 1;
 }
 
 // Заимствует ключ у правого брата
 void borrow_from_next(BTreeNode* node, int index) {
-    BTreeNode* child = node->children[index];
-    BTreeNode* sibling = node->children[index + 1];
+    BTreeNode* a = node->children[index];
+    BTreeNode* b = node->children[index + 1];
+    int i = 0;
 
-    copy_key(child->keys[child->key_count], node->keys[index]);
-    child->values[child->key_count] = node->values[index];
+    copy_key(a->keys[a->key_count], node->keys[index]);
+    a->values[a->key_count] = node->values[index];
 
-    if (!child->leaf) {
-        child->children[child->key_count + 1] = sibling->children[0];
+    if (!a->leaf) {
+        a->children[a->key_count + 1] = b->children[0];
     }
 
-    copy_key(node->keys[index], sibling->keys[0]);
-    node->values[index] = sibling->values[0];
+    copy_key(node->keys[index], b->keys[0]);
+    node->values[index] = b->values[0];
 
-    for (int i = 1; i < sibling->key_count; i++) {
-        copy_key(sibling->keys[i - 1], sibling->keys[i]);
-        sibling->values[i - 1] = sibling->values[i];
+    for (i = 0; i < b->key_count - 1; i++) {
+        copy_key(b->keys[i], b->keys[i + 1]);
+        b->values[i] = b->values[i + 1];
     }
 
-    if (!sibling->leaf) {
-        for (int i = 1; i <= sibling->key_count; i++) {
-            sibling->children[i - 1] = sibling->children[i];
+    if (!b->leaf) {
+        for (i = 0; i < b->key_count; i++) {
+            b->children[i] = b->children[i + 1];
         }
-        sibling->children[sibling->key_count] = NULL;
+        b->children[b->key_count] = NULL;
     }
 
-    child->key_count++;
-    sibling->key_count--;
+    a->key_count = a->key_count + 1;
+    b->key_count = b->key_count - 1;
 }
 
 // Склеивает двух соседних потомков в один
 void merge_children(BTreeNode* node, int index) {
-    BTreeNode* child = node->children[index];
-    BTreeNode* sibling = node->children[index + 1];
+    BTreeNode* a = node->children[index];
+    BTreeNode* b = node->children[index + 1];
+    int i = 0;
 
-    copy_key(child->keys[BTREE_T - 1], node->keys[index]);
-    child->values[BTREE_T - 1] = node->values[index];
+    copy_key(a->keys[BTREE_T - 1], node->keys[index]);
+    a->values[BTREE_T - 1] = node->values[index];
 
-    for (int i = 0; i < sibling->key_count; i++) {
-        copy_key(child->keys[i + BTREE_T], sibling->keys[i]);
-        child->values[i + BTREE_T] = sibling->values[i];
+    for (i = 0; i < b->key_count; i++) {
+        copy_key(a->keys[i + BTREE_T], b->keys[i]);
+        a->values[i + BTREE_T] = b->values[i];
     }
 
-    if (!child->leaf) {
-        for (int i = 0; i <= sibling->key_count; i++) {
-            child->children[i + BTREE_T] = sibling->children[i];
+    if (!a->leaf) {
+        for (i = 0; i <= b->key_count; i++) {
+            a->children[i + BTREE_T] = b->children[i];
         }
     }
 
-    for (int i = index + 1; i < node->key_count; i++) {
-        copy_key(node->keys[i - 1], node->keys[i]);
-        node->values[i - 1] = node->values[i];
+    for (i = index; i < node->key_count - 1; i++) {
+        copy_key(node->keys[i], node->keys[i + 1]);
+        node->values[i] = node->values[i + 1];
     }
 
-    for (int i = index + 2; i <= node->key_count; i++) {
-        node->children[i - 1] = node->children[i];
+    for (i = index + 1; i < node->key_count; i++) {
+        node->children[i] = node->children[i + 1];
     }
 
-    child->key_count += sibling->key_count + 1;
-    node->key_count--;
-    free(sibling);
+    a->key_count = a->key_count + b->key_count + 1;
+    node->key_count = node->key_count - 1;
+    free(b);
 }
 
 // Готовит потомка к безопасному удалению
 void fill_child(BTreeNode* node, int index) {
+    if (index < node->key_count && node->children[index + 1]->key_count >= BTREE_T) {
+        borrow_from_next(node, index);
+        return;
+    }
+
     if (index > 0 && node->children[index - 1]->key_count >= BTREE_T) {
         borrow_from_prev(node, index);
-    } else if (index < node->key_count && node->children[index + 1]->key_count >= BTREE_T) {
-        borrow_from_next(node, index);
+        return;
+    }
+
+    if (index == node->key_count) {
+        merge_children(node, index - 1);
     } else {
-        if (index < node->key_count) {
-            merge_children(node, index);
-        } else {
-            merge_children(node, index - 1);
-        }
+        merge_children(node, index);
     }
 }
 
 // Рекурсивно удаляет ключ из поддерева
-void delete_from_node(BTreeNode* node, const char* key, BTreeStatus* status) {
-    int index = find_key_index(node, key);
+void delete_from_node(BTreeNode* node, const char* key, int* status) {
+    int pos = find_key_index(node, key);
 
-    if (index < node->key_count && strcmp(node->keys[index], key) == 0) {
+    if (pos < node->key_count && strcmp(node->keys[pos], key) == 0) {
         if (node->leaf) {
-            remove_from_leaf(node, index);
-            *status = BTREE_OK;
+            remove_from_leaf(node, pos);
+            *status = 1;
             return;
         }
 
-        if (node->children[index]->key_count >= BTREE_T) {
-            char predecessor_key[BTREE_KEY_SIZE];
-            double predecessor_value = 0.0;
+        if (node->children[pos]->key_count >= BTREE_T) {
+            char tmp_key[BTREE_KEY_SIZE];
+            double tmp_value = 0.0;
 
-            get_predecessor(node, index, predecessor_key, &predecessor_value);
-            copy_key(node->keys[index], predecessor_key);
-            node->values[index] = predecessor_value;
-            delete_from_node(node->children[index], predecessor_key, status);
+            get_predecessor(node, pos, tmp_key, &tmp_value);
+            copy_key(node->keys[pos], tmp_key);
+            node->values[pos] = tmp_value;
+            delete_from_node(node->children[pos], tmp_key, status);
             return;
         }
 
-        if (node->children[index + 1]->key_count >= BTREE_T) {
-            char successor_key[BTREE_KEY_SIZE];
-            double successor_value = 0.0;
+        if (node->children[pos + 1]->key_count >= BTREE_T) {
+            char tmp_key[BTREE_KEY_SIZE];
+            double tmp_value = 0.0;
 
-            get_successor(node, index, successor_key, &successor_value);
-            copy_key(node->keys[index], successor_key);
-            node->values[index] = successor_value;
-            delete_from_node(node->children[index + 1], successor_key, status);
+            get_successor(node, pos, tmp_key, &tmp_value);
+            copy_key(node->keys[pos], tmp_key);
+            node->values[pos] = tmp_value;
+            delete_from_node(node->children[pos + 1], tmp_key, status);
             return;
         }
 
-        merge_children(node, index);
-        delete_from_node(node->children[index], key, status);
+        merge_children(node, pos);
+        delete_from_node(node->children[pos], key, status);
         return;
     }
 
     if (node->leaf) {
-        *status = BTREE_KEY_NOT_FOUND;
+        *status = 0;
         return;
     }
 
-    if (node->children[index]->key_count < BTREE_T) {
-        fill_child(node, index);
+    if (node->children[pos]->key_count < BTREE_T) {
+        fill_child(node, pos);
     }
 
-    if (index > node->key_count) {
-        delete_from_node(node->children[index - 1], key, status);
+    if (pos > node->key_count) {
+        delete_from_node(node->children[pos - 1], key, status);
     } else {
-        delete_from_node(node->children[index], key, status);
-    }
-}
-
-// Возвращает текст ошибки или статуса
-const char* status_text(BTreeStatus status) {
-    switch (status) {
-        case BTREE_OK:
-            return "OK";
-        case BTREE_INVALID_KEY:
-            return "Ошибка, некорректный ключ";
-        case BTREE_DUPLICATE_KEY:
-            return "Ошибка, такой ключ уже существует";
-        case BTREE_KEY_NOT_FOUND:
-            return "Ошибка, ключ не найден";
-        case BTREE_MEMORY_ERROR:
-            return "Ошибка, не удалось выделить память";
-        case BTREE_FILE_ERROR:
-            return "Ошибка, не удалось открыть файл";
-        case BTREE_INVALID_COMMAND:
-            return "Ошибка, неверная команда";
-        default:
-            return "Ошибка!";
-    }
-}
-
-// Пишет результат команды в файл
-void write_command_result(FILE* out, int operation, BTreeStatus status, const char* key, double value, BTree* tree) {
-    if (!out) return;
-
-    if (status != BTREE_OK) {
-        fprintf(out, "%s\n", status_text(status));
-        return;
-    }
-
-    switch (operation) {
-        case 1:
-            fprintf(out, "Ключ \"%s\" добавлен, значение = %.10g\n", key, value);
-            break;
-        case 2:
-            fprintf(out, "Ключ \"%s\" удалён\n", key);
-            break;
-        case 3:
-            fprintf(out, "Текущее дерево:\n");
-            print_tree(tree->root, 0, out);
-            break;
-        case 4:
-            fprintf(out, "Найдено: \"%s\" -> %.10g\n", key, value);
-            break;
-        default:
-            fprintf(out, "%s\n", status_text(status));
-            break;
+        delete_from_node(node->children[pos], key, status);
     }
 }
 
@@ -423,7 +378,8 @@ void clear_tree(BTree* tree) {
 int is_valid_key(const char* key) {
     size_t length = 0;
 
-    if (!key || !*key) return 0;
+    if (!key) return 0;
+    if (!*key) return 0;
 
     length = strlen(key);
     if (length == 0 || length > 6) return 0;
@@ -437,9 +393,13 @@ int is_valid_key(const char* key) {
 
 // Считает высоту дерева
 int tree_height(BTreeNode* node) {
+    int h = 0;
+
     if (!node) return 0;
     if (node->leaf) return 1;
-    return 1 + tree_height(node->children[0]);
+
+    h = tree_height(node->children[0]);
+    return h + 1;
 }
 
 // Считает общее число ключей
@@ -451,7 +411,8 @@ int count_keys(BTreeNode* node) {
     count += node->key_count;
     if (!node->leaf) {
         for (int i = 0; i <= node->key_count; i++) {
-            count += count_keys(node->children[i]);
+            int child_count = count_keys(node->children[i]);
+            count += child_count;
         }
     }
 
@@ -459,88 +420,100 @@ int count_keys(BTreeNode* node) {
 }
 
 // Ищет значение по ключу
-BTreeStatus search_tree(BTreeNode* node, const char* key, double* value_out) {
-    int index = 0;
-
-    if (!is_valid_key(key)) {
-        return BTREE_INVALID_KEY;
-    }
+int search_tree(BTreeNode* node, const char* key, double* value_out) {
+    int pos = 0;
 
     if (!node) {
-        return BTREE_KEY_NOT_FOUND;
+        return 0;
     }
 
-    while (index < node->key_count && strcmp(key, node->keys[index]) > 0) {
-        index++;
+    if (!is_valid_key(key)) {
+        return 0;
     }
 
-    if (index < node->key_count && strcmp(key, node->keys[index]) == 0) {
+    while (pos < node->key_count && strcmp(key, node->keys[pos]) > 0) {
+        pos++;
+    }
+
+    if (pos < node->key_count && strcmp(key, node->keys[pos]) == 0) {
         if (value_out) {
-            *value_out = node->values[index];
+            *value_out = node->values[pos];
         }
-        return BTREE_OK;
+        return 1;
     }
 
     if (node->leaf) {
-        return BTREE_KEY_NOT_FOUND;
+        return 0;
     }
 
-    return search_tree(node->children[index], key, value_out);
+    return search_tree(node->children[pos], key, value_out);
 }
 
-// Добавляет новый ключ в дерево
-BTreeStatus insert_tree(BTree* tree, const char* key, double value) {
-    double existing_value = 0.0;
-
-    if (!tree) return BTREE_MEMORY_ERROR;
-    if (!is_valid_key(key)) return BTREE_INVALID_KEY;
-
-    if (search_tree(tree->root, key, &existing_value) == BTREE_OK) {
-        return BTREE_DUPLICATE_KEY;
-    }
+// Добавляет новый ключ без сообщений
+int insert_tree_raw(BTree* tree, const char* key, double value) {
+    if (!tree) return 0;
 
     if (!tree->root) {
         tree->root = create_node(1);
-        if (!tree->root) return BTREE_MEMORY_ERROR;
+        if (!tree->root) return 0;
 
         copy_key(tree->root->keys[0], key);
         tree->root->values[0] = value;
         tree->root->key_count = 1;
-        return BTREE_OK;
+        return 1;
     }
 
     if (tree->root->key_count == BTREE_MAX_KEYS) {
         BTreeNode* new_root = create_node(0);
 
-        if (!new_root) return BTREE_MEMORY_ERROR;
+        if (!new_root) return 0;
 
         new_root->children[0] = tree->root;
         tree->root = new_root;
         if (!split_child(new_root, 0)) {
             tree->root = new_root->children[0];
             free(new_root);
-            return BTREE_MEMORY_ERROR;
+            return 0;
         }
     }
 
     if (!insert_non_full(tree->root, key, value)) {
-        return BTREE_MEMORY_ERROR;
+        return 0;
     }
 
-    return BTREE_OK;
+    return 1;
 }
 
-// Удаляет ключ из дерева
-BTreeStatus delete_tree(BTree* tree, const char* key) {
-    BTreeStatus status = BTREE_OK;
-    double existing_value = 0.0;
+// Добавляет новый ключ в дерево
+int insert_tree(BTree* tree, const char* key, double value) {
+    double old_value = 0.0;
 
-    if (!tree) return BTREE_MEMORY_ERROR;
-    if (!is_valid_key(key)) return BTREE_INVALID_KEY;
-    if (!tree->root) return BTREE_KEY_NOT_FOUND;
+    if (!tree) {
+        printf("Дерево не создано\n");
+        return 0;
+    }
 
-    status = search_tree(tree->root, key, &existing_value);
-    if (status != BTREE_OK) return status;
+    if (!is_valid_key(key)) {
+        printf("Некорректный ключ\n");
+        return 0;
+    }
+
+    if (search_tree(tree->root, key, &old_value)) {
+        printf("Такой ключ уже есть\n");
+        return 0;
+    }
+
+    if (!insert_tree_raw(tree, key, value)) {
+        printf("Не удалось добавить узел\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+// Удаляет ключ без сообщений
+void delete_tree_raw(BTree* tree, const char* key) {
+    int status = 0;
 
     delete_from_node(tree->root, key, &status);
 
@@ -555,8 +528,29 @@ BTreeStatus delete_tree(BTree* tree, const char* key) {
 
         free(old_root);
     }
+}
 
-    return status;
+// Удаляет ключ из дерева
+int delete_tree(BTree* tree, const char* key) {
+    double old_value = 0.0;
+
+    if (!tree) {
+        printf("Дерево не создано\n");
+        return 0;
+    }
+
+    if (!is_valid_key(key)) {
+        printf("Некорректный ключ\n");
+        return 0;
+    }
+
+    if (!tree->root || !search_tree(tree->root, key, &old_value)) {
+        printf("Ключ не найден\n");
+        return 0;
+    }
+
+    delete_tree_raw(tree, key);
+    return 1;
 }
 
 // Печатает дерево с отступами
@@ -574,14 +568,14 @@ void print_tree(BTreeNode* node, int depth, FILE* out) {
         fprintf(out, "  ");
     }
 
-    fprintf(out, "[");
+    fprintf(out, "< ");
     for (int i = 0; i < node->key_count; i++) {
-        fprintf(out, "%s=%.10g", node->keys[i], node->values[i]);
+        fprintf(out, "%s -> %.10g", node->keys[i], node->values[i]);
         if (i + 1 < node->key_count) {
-            fprintf(out, " | ");
+            fprintf(out, " , ");
         }
     }
-    fprintf(out, "]\n");
+    fprintf(out, " >\n");
 
     if (!node->leaf) {
         for (int i = 0; i <= node->key_count; i++) {
@@ -591,94 +585,130 @@ void print_tree(BTreeNode* node, int depth, FILE* out) {
 }
 
 // Разбирает и выполняет одну команду
-BTreeStatus process_command_line(BTree* tree, const char* line, FILE* out) {
-    int operation = 0;
+int process_command_line(BTree* tree, const char* line, FILE* out) {
+    int cmd = 0;
     char key[64];
     char extra[64];
     double value = 0.0;
-    BTreeStatus status = BTREE_INVALID_COMMAND;
-    const char* cursor = line;
+    double ans = 0.0;
+    const char* ptr = line;
 
-    if (!tree || !line) return BTREE_INVALID_COMMAND;
+    if (!tree || !line) return 0;
 
     key[0] = '\0';
     extra[0] = '\0';
 
-    while (*cursor && isspace((unsigned char)*cursor)) {
-        cursor++;
+    while (*ptr && isspace((unsigned char)*ptr)) {
+        ptr++;
     }
 
-    if (*cursor == '\0') {
-        return BTREE_INVALID_COMMAND;
+    if (*ptr == '\0') {
+        return 0;
     }
 
-    if (sscanf(cursor, "%d", &operation) != 1) {
-        write_command_result(out, operation, BTREE_INVALID_COMMAND, NULL, 0.0, tree);
-        return BTREE_INVALID_COMMAND;
+    if (sscanf(ptr, "%d", &cmd) != 1) {
+        fprintf(out, "Ошибка в команде\n");
+        return 0;
     }
 
-    switch (operation) {
+    switch (cmd) {
         case 1:
-            if (sscanf(cursor, "%d %63s %lf %63s", &operation, key, &value, extra) != 3) {
-                status = BTREE_INVALID_COMMAND;
-            } else {
-                status = insert_tree(tree, key, value);
+            if (sscanf(ptr, "%d %63s %lf %63s", &cmd, key, &value, extra) != 3) {
+                fprintf(out, "Ошибка в команде\n");
+                return 0;
             }
-            write_command_result(out, operation, status, key[0] ? key : NULL, value, tree);
-            return status;
+
+            if (!is_valid_key(key)) {
+                fprintf(out, "Некорректный ключ\n");
+                return 0;
+            }
+
+            if (search_tree(tree->root, key, NULL)) {
+                fprintf(out, "Такой ключ уже есть\n");
+                return 0;
+            }
+
+            if (!insert_tree_raw(tree, key, value)) {
+                fprintf(out, "Не удалось добавить узел\n");
+                return 0;
+            }
+
+            fprintf(out, "Ключ \"%s\" добавлен, значение = %.10g\n", key, value);
+            return 1;
         case 2:
-            if (sscanf(cursor, "%d %63s %63s", &operation, key, extra) != 2) {
-                status = BTREE_INVALID_COMMAND;
-            } else {
-                status = delete_tree(tree, key);
+            if (sscanf(ptr, "%d %63s %63s", &cmd, key, extra) != 2) {
+                fprintf(out, "Ошибка в команде\n");
+                return 0;
             }
-            write_command_result(out, operation, status, key[0] ? key : NULL, 0.0, tree);
-            return status;
+
+            if (!is_valid_key(key)) {
+                fprintf(out, "Некорректный ключ\n");
+                return 0;
+            }
+
+            if (!search_tree(tree->root, key, NULL)) {
+                fprintf(out, "Ключ не найден\n");
+                return 0;
+            }
+
+            delete_tree_raw(tree, key);
+            fprintf(out, "Ключ \"%s\" удалён\n", key);
+            return 1;
         case 3: {
             char tail[8];
 
-            if (sscanf(cursor, "%d %7s", &operation, tail) != 1) {
-                status = BTREE_INVALID_COMMAND;
-            } else {
-                status = BTREE_OK;
+            if (sscanf(ptr, "%d %7s", &cmd, tail) != 1) {
+                fprintf(out, "Ошибка в команде\n");
+                return 0;
             }
 
-            write_command_result(out, operation, status, NULL, 0.0, tree);
-            return status;
+            fprintf(out, "Текущее дерево:\n");
+            print_tree(tree->root, 0, out);
+            return 1;
         }
         case 4:
-            if (sscanf(cursor, "%d %63s %63s", &operation, key, extra) != 2) {
-                status = BTREE_INVALID_COMMAND;
-                write_command_result(out, operation, status, key[0] ? key : NULL, 0.0, tree);
-                return status;
+            if (sscanf(ptr, "%d %63s %63s", &cmd, key, extra) != 2) {
+                fprintf(out, "Ошибка в команде\n");
+                return 0;
             }
 
-            status = search_tree(tree->root, key, &value);
-            write_command_result(out, operation, status, key, value, tree);
-            return status;
+            if (!is_valid_key(key)) {
+                fprintf(out, "Некорректный ключ\n");
+                return 0;
+            }
+
+            if (!search_tree(tree->root, key, &ans)) {
+                fprintf(out, "Ключ не найден\n");
+                return 0;
+            }
+
+            fprintf(out, "Найдено: \"%s\" -> %.10g\n", key, ans);
+            return 1;
         default:
-            write_command_result(out, operation, BTREE_INVALID_COMMAND, NULL, 0.0, tree);
-            return BTREE_INVALID_COMMAND;
+            fprintf(out, "Неизвестная команда\n");
+            return 0;
     }
 }
 
 // Выполняет все команды из входного файла
-BTreeStatus process_commands_from_file(BTree* tree, const char* input_filename, const char* output_filename) {
+int process_commands_from_file(BTree* tree, const char* input_filename, const char* output_filename) {
     FILE* input = NULL;
     FILE* output = NULL;
     char line[256];
 
-    if (!tree) return BTREE_MEMORY_ERROR;
+    if (!tree) return 0;
 
     input = fopen(input_filename, "r");
     if (!input) {
-        return BTREE_FILE_ERROR;
+        printf("Не удалось открыть входной файл\n");
+        return 0;
     }
 
     output = fopen(output_filename, "w");
     if (!output) {
         fclose(input);
-        return BTREE_FILE_ERROR;
+        printf("Не удалось открыть выходной файл\n");
+        return 0;
     }
 
     while (fgets(line, sizeof(line), input) != NULL) {
@@ -693,5 +723,5 @@ BTreeStatus process_commands_from_file(BTree* tree, const char* input_filename, 
 
     fclose(input);
     fclose(output);
-    return BTREE_OK;
+    return 1;
 }

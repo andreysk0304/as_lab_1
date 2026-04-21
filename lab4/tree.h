@@ -20,16 +20,6 @@ typedef struct BTree {
     BTreeNode* root;
 } BTree;
 
-typedef enum BTreeStatus {
-    BTREE_OK,
-    BTREE_INVALID_KEY,
-    BTREE_DUPLICATE_KEY,
-    BTREE_KEY_NOT_FOUND,
-    BTREE_MEMORY_ERROR,
-    BTREE_FILE_ERROR,
-    BTREE_INVALID_COMMAND
-} BTreeStatus;
-
 void init_tree(BTree* tree);
 BTreeNode* create_node(int leaf);
 void clear_tree(BTree* tree);
@@ -39,13 +29,13 @@ int is_valid_key(const char* key);
 int tree_height(BTreeNode* node);
 int count_keys(BTreeNode* node);
 
-BTreeStatus insert_tree(BTree* tree, const char* key, double value);
-BTreeStatus delete_tree(BTree* tree, const char* key);
-BTreeStatus search_tree(BTreeNode* node, const char* key, double* value_out);
+int insert_tree(BTree* tree, const char* key, double value);
+int delete_tree(BTree* tree, const char* key);
+int search_tree(BTreeNode* node, const char* key, double* value_out);
 
 void print_tree(BTreeNode* node, int depth, FILE* out);
 
-BTreeStatus process_command_line(BTree* tree, const char* line, FILE* out);
-BTreeStatus process_commands_from_file(BTree* tree, const char* input_filename, const char* output_filename);
+int process_command_line(BTree* tree, const char* line, FILE* out);
+int process_commands_from_file(BTree* tree, const char* input_filename, const char* output_filename);
 
 #endif
